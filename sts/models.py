@@ -13,3 +13,13 @@ class Customer(models.Model):
     
     def __str__(self):
         return self.full_name
+    
+class Driver(models.Model):
+    full_name = models.CharField(max_length=50)    
+    email = models.EmailField(unique=True)
+    vehicle_type = models.CharField(max_length=50)
+    phone_number = models.CharField(max_length=13)
+    
+    def __str__(self):
+        return self.full_name
+        
