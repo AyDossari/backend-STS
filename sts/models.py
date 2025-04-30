@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 # Create your models here.
 
@@ -30,7 +31,13 @@ class Product(models.Model):
     weight = models.DecimalField(max_digits=6, decimal_places=2)
     
     # From django docs `https://docs.djangoproject.com/en/4.2/ref/models/fields/#default`
-    status = models.CharField(max_length=20, default='Pending')   
+    status = models.CharField(max_length=20, default='Pending')  
     
+    # From stack overflow `https://stackoverflow.com/questions/48438569/returning-hex-uuid-as-default-value-for-django-model-charfield`
+    def generate_serial():
+        return uuid.uuid4().hex[:8].upper() 
+        
+    serial_number = models.CharField(max_length=8,unique=True, default=generate_serial,editable=False)
+
     def __str__(self):
         return self.name
