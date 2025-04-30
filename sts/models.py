@@ -22,4 +22,15 @@ class Driver(models.Model):
     
     def __str__(self):
         return self.full_name
-        
+    
+class Product(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='products') 
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    weight = models.DecimalField(max_digits=6, decimal_places=2)
+    
+    # From django docs `https://docs.djangoproject.com/en/4.2/ref/models/fields/#default`
+    status = models.CharField(max_length=20, default='Pending')   
+    
+    def __str__(self):
+        return self.name
