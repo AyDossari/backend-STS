@@ -44,7 +44,7 @@ class Product(models.Model):
     
     class DriverRequest(models.Model):
         driver = models.ForeignKey('Driver', on_delete=models.CASCADE, related_name='requests')
-        product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='driver_driver_requests')
+        product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='driver_requests')
         
         # From django docs `https://docs.djangoproject.com/en/4.2/ref/models/fields/#default`
         status = models.CharField(max_length=20, default='Pending')
