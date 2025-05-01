@@ -39,4 +39,10 @@ class ProductDetilView(APIView):
             return Response(serializer._errors, status= 200)
         return Response(serializer.errors, status=400)
     
+    def delete(self, request, pk):
+        product = self.get_object(pk)
+        product.delete()
+        return Response(status=204)    
+    
+    
     
