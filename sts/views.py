@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Product
-from .serializers import ProductSerializer
+from .models import Product , DriverRequest
+from .serializers import ProductSerializer , DriverRequestSerializer
 
 # Create your views here.
 
@@ -45,4 +45,25 @@ class ProductDetilView(APIView):
         return Response(status=204)    
     
     
+class DriverRequestDetailView(APIView):
+    def get_object(self, pk):
+        return get_object_or_404(DriverRequest, pk=pk)
+
+    def get(self, request, pk):
+        driver_request = self.get_object(pk)
+        serializer = DriverRequestSerializer(driver_request)
+        return Response(serializer.data, status=200)
+
+    def patch(self, request, pk):
+        driver_request = self.get_object(pk)
+        serializer = DriverRequestSerializer(driver_request, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        driver_request = self.get_object(pk)
+        driver_request.delete()
+        return Response(status=204)    
     
