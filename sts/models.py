@@ -1,14 +1,13 @@
 from django.db import models
 import uuid
-
+from django.contrib.auth.models import User
 # Create your models here.
 
 
 class Customer(models.Model):
     full_name = models.CharField(max_length=50)
-    
-    # From django docs `https://docs.djangoproject.com/en/4.2/ref/models/fields/#field-options`
-    email = models.EmailField(unique=True)
+    # From django docs `https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#extending-the-existing-user-model`
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     address = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=13)
     
@@ -17,7 +16,9 @@ class Customer(models.Model):
     
 class Driver(models.Model):
     full_name = models.CharField(max_length=50)    
-    email = models.EmailField(unique=True)
+    
+    # From django docs `https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#extending-the-existing-user-model`
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     vehicle_type = models.CharField(max_length=50)
     phone_number = models.CharField(max_length=13)
     
