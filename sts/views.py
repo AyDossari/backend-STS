@@ -113,4 +113,9 @@ class CustomerDetilView(APIView):
         customer = Customer.objects.get(user = request.user)
         serializer = CustomerSerializer(customer)
         return Response(serializer.data, status= 200)
-        
+    
+class DriverDetilView(APIView):
+    def get(self , request):
+        driver = Driver.objects.get(user = request.user)
+        serializer = DriverSrializer(driver)
+        return Response(serializer.data, status=200)        
