@@ -7,5 +7,5 @@ def test_api(request):
     return Response({"message": "Test, api!"})
 
 urlpatterns = [
-    path('api/hello/', test_api),
+    path('api/test/', test_api),
 ]
