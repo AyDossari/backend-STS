@@ -2,7 +2,10 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Product , DriverRequest
+from .models import Product , DriverRequest , Customer
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from .serializers import ProductSerializer , DriverRequestSerializer
 
 # Create your views here.
@@ -65,5 +68,24 @@ class DriverRequestDetailView(APIView):
     def delete(self, request, pk):
         driver_request = self.get_object(pk)
         driver_request.delete()
-        return Response(status=204)    
+        return Response(status=204)
     
+class CustomerSignupView(APIView):
+    
+    def post(self, request):
+        
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        full_name = request.data.get('full_name')
+        address = request.data.get('address')
+        phone_number = request.data.get('phone_number')
+
+        try:
+            validate_password(password)
+        except ValidationError as err:
+            return Response({'error': err.messages}, status=400)
+
+        user = User.objects.create_user(username=username, email=email, password=password)
+        Customer.objects.create(user=user, full_name=full_name, address=address, phone_number=phone_number)    
+        
