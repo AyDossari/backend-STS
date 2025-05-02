@@ -6,7 +6,7 @@ from .models import Product , DriverRequest , Customer , Driver
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from .serializers import ProductSerializer , DriverRequestSerializer
+from .serializers import ProductSerializer , DriverRequestSerializer , CustomerSerializer , DriverSrializer
 
 # Create your views here.
 
@@ -106,3 +106,11 @@ class DriverSignupView(APIView):
 
         user = User.objects.create_user(username=username, email=email, password=password)
         Driver.objects.create(user=user, full_name=full_name, vehicle_type=vehicle_type, phone_number=phone_number)
+        
+        
+class CustomerDetilView(APIView):      
+    def get(self , request):
+        customer = Customer.objects.get(user = request.user)
+        serializer = CustomerSerializer(customer)
+        return Response(serializer.data, status= 200)
+        
