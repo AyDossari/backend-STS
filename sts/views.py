@@ -8,13 +8,15 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from .serializers import ProductSerializer , DriverRequestSerializer , CustomerSerializer , DriverSrializer
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.permissions import IsAuthenticated , AllowAny
 # Create your views here.
 
 
 class ProductListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
-        product = Product.objects.filter(customer_user=request.user)
+        product = Product.objects.filter(customer__user=request.user)
         serializer = ProductSerializer(product, many=True)
         return Response(serializer.data, status= 200)
 
@@ -115,7 +117,7 @@ class DriverRequestDetailView(APIView):
         return Response(status=204)
     
 class CustomerSignupView(APIView):
-    
+    permission_classes = [AllowAny]
     def post(self, request):
         
         username = request.data.get('username')
