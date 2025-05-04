@@ -14,7 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 class ProductListCreateView(APIView):
     def get(self, request):
-        product = Product.objects.all()
+        product = Product.objects.filter(customer_user=request.user)
         serializer = ProductSerializer(product, many=True)
         return Response(serializer.data, status= 200)
 
