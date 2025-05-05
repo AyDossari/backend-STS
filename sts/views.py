@@ -14,21 +14,27 @@ from rest_framework.permissions import IsAuthenticated , AllowAny
 
 class ProductListCreateView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         product = Product.objects.filter(customer__user=request.user)
         serializer = ProductSerializer(product, many=True)
         return Response(serializer.data, status= 200)
 
     def post(self, request):
+        try:
+            customer = Customer.objects.get(user=request.user)
+        # From stack overflow `https://stackoverflow.com/questions/52575523/how-to-capture-the-model-doesnotexist-exception-in-django-rest-framework`
+        except Customer.DoesNotExist:
+          return Response({"error": "Customer not found."}, status=404)            
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(customer=customer)
             return Response(serializer.data, status= 201)
         return Response(serializer.errors, status= 400)
     
     
 class ProductDetilView(APIView):
+    permission_classes = [IsAuthenticated]
     def get_object(self , pk):
         return get_object_or_404(Product, pk=pk )
     
@@ -52,11 +58,18 @@ class ProductDetilView(APIView):
     
     
 class DriverRequestListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
-        requests = DriverRequest.objects.all()
-        serializer = DriverRequestSerializer(requests, many=True)
-        return Response(serializer.data)
+        available_products = Product.objects.filter(status='Pending')
+        requests = DriverRequest.objects.filter(driver__user=request.user)
+        request_serializer = DriverRequestSerializer(requests, many=True)
+        product_serializer = ProductSerializer(available_products, many=True)
 
+        return Response({
+                'requests': request_serializer.data,
+                'available_products': product_serializer.data,
+            })
+        
     def post(self, request):
         serializer = DriverRequestSerializer(data=request.data)
 
@@ -64,22 +77,32 @@ class DriverRequestListCreateView(APIView):
             product_id = request.data.get('product')
 
             try:
-                product = Product.objects.get(id=product_id)
-             # From stack overflow `https://stackoverflow.com/questions/52575523/how-to-capture-the-model-doesnotexist-exception-in-django-rest-framework?utm_source=chatgpt.com`                
+                product = Product.objects.get(id=product_id)            
             except Product.DoesNotExist:
                 return Response({"error": "Product not found."}, status=404)
 
             if product.status != "Pending":
                 return Response({"error": "Product is already taken."}, status=400)
-            driver_request = serializer.save()
-            product.status = "Approved"
+            
+            try:
+                driver = Driver.objects.get(user=request.user)
+            except Driver.DoesNotExist:
+                return Response({"error": "Driver not found."}, status=404)
+            
+            
+            product.status = "Approved"         
+            driver_request = serializer.save(driver=driver , status=product.status)            
+            driver_request.status = product.status
+            
             product.save()
 
+            
             return Response(serializer.data, status=201)
 
         return Response(serializer.errors, status=400)
     
 class DriverRequestDetailView(APIView):
+    permission_classes = [IsAuthenticated]
     def get_object(self, pk):
         return get_object_or_404(DriverRequest, pk=pk)
 
@@ -145,7 +168,7 @@ class CustomerSignupView(APIView):
         ) 
         
 class DriverSignupView(APIView):
-    
+    permission_classes = [AllowAny]
     def post(self, request):
         username = request.data.get('username')
         email = request.data.get('email')

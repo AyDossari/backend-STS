@@ -15,9 +15,12 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+        # From stack overflow `https://stackoverflow.com/questions/41366832/django-rest-api-make-field-read-only-for-certain-permission-level`
+        read_only_fields = ['customer']
 
 
 class DriverRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DriverRequest
-        fields = '__all__'        
+        fields = '__all__'  
+        read_only_fields = ['driver']      
