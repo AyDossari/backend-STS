@@ -122,13 +122,13 @@ class DriverRequestDetailView(APIView):
             if new_status:
                 product = driver_request.product
 
-                if new_status == 'Accepted':
-                    product.status = 'Approved'
-                elif new_status == 'PickedUp':
+                if new_status == 'PickedUp':
                     product.status = 'PickedUp'
                 elif new_status == 'Stored':
                     product.status = 'Stored'
-
+                    
+                driver_request.status = new_status
+                driver_request.save()
                 product.save()
             
             return Response(serializer.data)
@@ -136,6 +136,9 @@ class DriverRequestDetailView(APIView):
 
     def delete(self, request, pk):
         driver_request = self.get_object(pk)
+        product = driver_request.product
+        product.status = "Pending"
+        product.save()        
         driver_request.delete()
         return Response(status=204)
     
