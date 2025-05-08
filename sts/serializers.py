@@ -12,6 +12,7 @@ class DriverSrializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class ProductSerializer(serializers.ModelSerializer):
+    customer = CustomerSerializer(read_only=True)    
     class Meta:
         model = Product
         fields = '__all__'

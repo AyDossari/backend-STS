@@ -60,6 +60,8 @@ class ProductDetilView(APIView):
 class DriverRequestListCreateView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
+        if not request.user.is_staff:
+            return Response({"error": "Unauthorized to access."}, status=403)
         available_products = Product.objects.filter(status='Pending')
         requests = DriverRequest.objects.filter(driver__user=request.user)
         request_serializer = DriverRequestSerializer(requests, many=True)
@@ -71,6 +73,8 @@ class DriverRequestListCreateView(APIView):
             })
         
     def post(self, request):
+        if not request.user.is_staff:
+            return Response({"error": "Unauthorized to access."}, status=403)        
         serializer = DriverRequestSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -103,15 +107,20 @@ class DriverRequestListCreateView(APIView):
     
 class DriverRequestDetailView(APIView):
     permission_classes = [IsAuthenticated]
+    
     def get_object(self, pk):
         return get_object_or_404(DriverRequest, pk=pk)
 
     def get(self, request, pk):
+        if not request.user.is_staff:
+            return Response({"error": "Unauthorized to access."}, status=403)        
         driver_request = self.get_object(pk)
         serializer = DriverRequestSerializer(driver_request)
         return Response(serializer.data, status=200)
 
     def patch(self, request, pk):
+        if not request.user.is_staff:
+            return Response({"error": "Unauthorized to access."}, status=403)        
         driver_request = self.get_object(pk)
         serializer = DriverRequestSerializer(driver_request, data=request.data , partial=True)
         if serializer.is_valid():
@@ -135,6 +144,8 @@ class DriverRequestDetailView(APIView):
         return Response(serializer.errors, status=400)
 
     def delete(self, request, pk):
+        if not request.user.is_staff:
+            return Response({"error": "Unauthorized to access."}, status=403)        
         driver_request = self.get_object(pk)
         product = driver_request.product
         product.status = "Pending"
@@ -186,6 +197,8 @@ class DriverSignupView(APIView):
             return Response({'error': err.messages}, status=400)
 
         user = User.objects.create_user(username=username, email=email, password=password)
+        user.is_staff = True
+        user.save()
         Driver.objects.create(user=user, full_name=full_name, vehicle_type=vehicle_type, phone_number=phone_number)
         
         tokens = RefreshToken.for_user(user)
@@ -206,6 +219,9 @@ class CustomerDetilView(APIView):
     
 class DriverDetilView(APIView):
     def get(self , request):
-        driver = Driver.objects.get(user = request.user)
-        serializer = DriverSrializer(driver)
-        return Response(serializer.data, status=200)        
+        try:
+            driver = Driver.objects.get(user = request.user)
+            serializer = DriverSrializer(driver)
+            return Response(serializer.data, status=200)
+        except Driver.DoesNotExist:
+            return Response({"detail": "Driver not found."}, status=404)     
