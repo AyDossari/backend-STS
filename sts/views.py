@@ -14,7 +14,6 @@ from rest_framework.permissions import IsAuthenticated , AllowAny
 
 class ProductListCreateView(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
         product = Product.objects.filter(customer__user=request.user)
         serializer = ProductSerializer(product, many=True)
@@ -40,11 +39,15 @@ class ProductDetilView(APIView):
     
     def get(self,request,pk):
         product = self.get_object(pk)
+        if product.customer.user != request.user:
+            return Response({"error": "Unauthorized to access."}, status=403)
         serializer = ProductSerializer(product)
         return Response(serializer.data, status=200)
     
     def patch(self,request,pk):
         product = self.get_object(pk)
+        if product.customer.user != request.user:
+             return Response({"error": "Unauthorized to access."}, status=403)
         serializer = ProductSerializer(product ,data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -53,10 +56,11 @@ class ProductDetilView(APIView):
     
     def delete(self, request, pk):
         product = self.get_object(pk)
+        if product.customer.user != request.user:
+            return Response({"error": "Unauthorized to access."}, status=403)
         product.delete()
         return Response(status=204)    
-    
-    
+        
 class DriverRequestListCreateView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -119,9 +123,9 @@ class DriverRequestDetailView(APIView):
         return Response(serializer.data, status=200)
 
     def patch(self, request, pk):
-        if not request.user.is_staff:
-            return Response({"error": "Unauthorized to access."}, status=403)        
         driver_request = self.get_object(pk)
+        if not request.user.is_staff or driver_request.driver.user != request.user:
+            return Response({"error": "Unauthorized to access."}, status=403)        
         serializer = DriverRequestSerializer(driver_request, data=request.data , partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -144,9 +148,9 @@ class DriverRequestDetailView(APIView):
         return Response(serializer.errors, status=400)
 
     def delete(self, request, pk):
-        if not request.user.is_staff:
-            return Response({"error": "Unauthorized to access."}, status=403)        
         driver_request = self.get_object(pk)
+        if not request.user.is_staff or driver_request.driver.user != request.user:
+            return Response({"error": "Unauthorized to access."}, status=403)        
         product = driver_request.product
         product.status = "Pending"
         product.save()        
