@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from .serializers import ProductSerializer , DriverRequestSerializer , CustomerSerializer , DriverSrializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated , AllowAny
+from django.db import transaction
 # Create your views here.
 
 
@@ -82,30 +83,30 @@ class DriverRequestListCreateView(APIView):
         serializer = DriverRequestSerializer(data=request.data)
 
         if serializer.is_valid():
-            product_id = request.data.get('product')
+            product_id = serializer.validated_data.get('product')
+                
+            with transaction.atomic():
+                try:
+                    product = Product.objects.select_for_update().get(id=product_id)            
+                except Product.DoesNotExist:
+                    return Response({"error": "Product not found."}, status=404)
 
-            try:
-                product = Product.objects.get(id=product_id)            
-            except Product.DoesNotExist:
-                return Response({"error": "Product not found."}, status=404)
+                if product.status != "Pending":
+                    return Response({"error": "Product is already taken."}, status=400)
+                
+                try:
+                    driver = Driver.objects.get(user=request.user)
+                except Driver.DoesNotExist:
+                    return Response({"error": "Driver not found."}, status=404)
+                
+                
+                product.status = "Approved"         
+                serializer.save(driver=driver , status=product.status)            
+                
+                product.save()
 
-            if product.status != "Pending":
-                return Response({"error": "Product is already taken."}, status=400)
-            
-            try:
-                driver = Driver.objects.get(user=request.user)
-            except Driver.DoesNotExist:
-                return Response({"error": "Driver not found."}, status=404)
-            
-            
-            product.status = "Approved"         
-            driver_request = serializer.save(driver=driver , status=product.status)            
-            driver_request.status = product.status
-            
-            product.save()
-
-            
-            return Response(serializer.data, status=201)
+                
+                return Response(serializer.data, status=201)
 
         return Response(serializer.errors, status=400)
     
@@ -116,9 +117,9 @@ class DriverRequestDetailView(APIView):
         return get_object_or_404(DriverRequest, pk=pk)
 
     def get(self, request, pk):
-        if not request.user.is_staff:
-            return Response({"error": "Unauthorized to access."}, status=403)        
         driver_request = self.get_object(pk)
+        if not request.user.is_staff or driver_request.driver.user != request.user:
+            return Response({"error": "Unauthorized to access."}, status=403)        
         serializer = DriverRequestSerializer(driver_request)
         return Response(serializer.data, status=200)
 
